@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>VPN Manager Android 0.1.0</title>
+<title>VPN Manager Android 0.1.1</title>
 <style>
 :root {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-synthesis:none;}
 *{box-sizing:border-box}
@@ -25,6 +25,19 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .phone-shell{width:100vw!important;height:100dvh!important;border-radius:0;box-shadow:none;background:transparent}
   .app{border-radius:0}
 }
+html.android-app body, body.android-app{
+  padding:0!important;margin:0!important;background:#090911!important;
+  min-height:100vh;min-height:100dvh;overflow:hidden;align-items:stretch!important;justify-content:stretch!important;
+}
+html.android-app .phone-shell, body.android-app .phone-shell{
+  width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;
+  border-radius:0!important;box-shadow:none!important;background:transparent!important;
+}
+html.android-app .app, body.android-app .app{
+  width:100vw!important;height:100dvh!important;max-width:none!important;border-radius:0!important;zoom:1!important;
+}
+html.android-app .status{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+html.android-app .home-indicator{padding-bottom:env(safe-area-inset-bottom,0px)}
 .app.light{
   --bg:#f7f5fc;--panel:#fff;--soft:#f1ecfc;--fg:#211d35;--muted:#77748b;--border:#d8d0e6;
   --lav:#7143d7;--selected:#ece5fc;--nav-bg:#eee6ff;--nav-fg:#7143d7;color-scheme:light
@@ -249,7 +262,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
   <div class="home-indicator"></div>
   <div id="modalRoot"></div>
   <div class="toast-wrap" id="toastRoot"></div>
-  <input id="ovpnInput" type="file" accept=".ovpn" hidden />
+  <input id="ovpnInput" type="file" accept=".ovpn,application/x-openvpn-profile,application/octet-stream,text/plain,*/*" hidden />
 </div>
 </div>
 <script>
@@ -265,7 +278,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
     appVersion:'0.1.0',appMode:'dry-run',apiOnline:false
   };
   const app=document.getElementById('app'),shell=document.getElementById('phoneShell'),main=document.getElementById('main'),nav=document.getElementById('nav'),modalRoot=document.getElementById('modalRoot'),toastRoot=document.getElementById('toastRoot'),fileInput=document.getElementById('ovpnInput');
-  const APP_BUILD='0.1.0';
+  const APP_BUILD='0.1.1';
   const API=window.location.origin;
   const INSTALL_STEPS=['instSsh1','instPkg1','instOvpn1','instSsh2ViaS1','instPkg2','instOvpn2','instGre','instFirewallS2','instUser','instDns','instCheck'];
   const api=async(path,opts={})=>{
@@ -326,7 +339,18 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
     if(hit)return hit.w/hit.mmW;
     return cssMmPerPx();
   };
+  const isAndroidApp=()=>document.documentElement.classList.contains('android-app')||document.body.classList.contains('android-app')||!!window.VpnNative;
   const applyPhysicalPhoneSize=()=>{
+    if(isAndroidApp()){
+      shell.style.width='100vw';
+      shell.style.height='100dvh';
+      shell.style.borderRadius='0';
+      app.style.zoom='1';
+      app.style.width='100vw';
+      app.style.height='100dvh';
+      app.style.borderRadius='0';
+      return;
+    }
     const narrow=window.matchMedia('(max-width:430px)').matches;
     const pad=narrow?0:24;
     const pxPerMm=estimatePxPerMm();
@@ -343,6 +367,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
     app.style.zoom=String(Math.max(0.2,scale));
     app.style.borderRadius=narrow?'0':`${10*pxPerMm*room/Math.max(scale,0.01)}px`;
   };
+  window.__vpnAndroidReady=()=>{document.documentElement.classList.add('android-app');document.body.classList.add('android-app');applyPhysicalPhoneSize();render();};
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const iconPaths={
     shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
@@ -399,7 +424,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
       serverIp:'IP-адрес',ipPh:'IP или домен',sshLogin:'Логин SSH',sshPort:'SSH-порт',
       stepServers:'Серверы',stepUser:'Пользователь',stepNet:'Сеть',pairName:'Название связки',pairNamePh:'Новая VPN-связка',howConnect:'Как подключаться',maxConns:'Максимум подключений с одного конфига',next:'Далее',installHint:'v0.1: bootstrap ПК→S1→S2, затем S2 только через GRE. По умолчанию dry-run. Для ошибки в названии укажите fail.',
       settingsTitle:'Настройки',secInterface:'Интерфейс',secConnection:'Подключение',secNotifications:'Уведомления',secAbout:'О приложении',
-      language:'Язык',darkTheme:'Тёмная тема',autoConnect:'Автоподключение',killSwitch:'Kill Switch',reconnect:'Переподключение при обрыве',startup:'Запуск вместе с системой',alerts:'Уведомления о статусе',sound:'Звук',version:'Версия',versionValue:'0.1.0',
+      language:'Язык',darkTheme:'Тёмная тема',autoConnect:'Автоподключение',killSwitch:'Kill Switch',reconnect:'Переподключение при обрыве',startup:'Запуск вместе с системой',alerts:'Уведомления о статусе',sound:'Звук',version:'Версия',versionValue:'0.1.1',
       settingsHint:'Клиенты OpenVPN идут на Server 1. Управление Server 2 — только через GRE.',
       dnsDevice:'DNS устройства',dnsDeviceHint:'Как настроено на устройстве',dnsCustom:'Свой DNS',dnsCustomHint:'Указать адреса вручную',dnsAnd:'и',dnsPrimary:'Основной',dnsSecondary:'Запасной',
       routeSplit:'Раздельно',routeSplitHint:'IPlist и RU-EU через сервер 2, RU через сервер 1, остальной трафик напрямую',
@@ -437,7 +462,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
       serverIp:'IP address',ipPh:'IP or domain',sshLogin:'SSH login',sshPort:'SSH port',
       stepServers:'Servers',stepUser:'User',stepNet:'Network',pairName:'Pair name',pairNamePh:'New VPN pair',howConnect:'How to connect',maxConns:'Max connections per config',next:'Next',installHint:'v0.1: bootstrap PC→S1→S2, then manage S2 only via GRE. Default dry-run. Put fail in the name to preview an error.',
       settingsTitle:'Settings',secInterface:'Interface',secConnection:'Connection',secNotifications:'Notifications',secAbout:'About',
-      language:'Language',darkTheme:'Dark theme',autoConnect:'Auto-connect',killSwitch:'Kill Switch',reconnect:'Reconnect on drop',startup:'Launch at startup',alerts:'Status notifications',sound:'Sound',version:'Version',versionValue:'0.1.0',
+      language:'Language',darkTheme:'Dark theme',autoConnect:'Auto-connect',killSwitch:'Kill Switch',reconnect:'Reconnect on drop',startup:'Launch at startup',alerts:'Status notifications',sound:'Sound',version:'Version',versionValue:'0.1.1',
       settingsHint:'OpenVPN clients connect to Server 1. Server 2 admin goes only through GRE.',
       dnsDevice:'Device DNS',dnsDeviceHint:'As configured on the device',dnsCustom:'Custom DNS',dnsCustomHint:'Enter addresses manually',dnsAnd:'and',dnsPrimary:'Primary',dnsSecondary:'Secondary',
       routeSplit:'Split',routeSplitHint:'IPlist and RU-EU via server 2, RU via server 1, other traffic directly',
@@ -777,7 +802,17 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
         },1400);
         break;
       }
-      case 'pick-file':state.menu=false;fileInput.value='';fileInput.click();return;
+      case 'pick-file':{
+        state.menu=false;
+        // Prefer native Android picker (reliable in WebView).
+        if(window.VpnNative&&typeof VpnNative.pickOvpnFile==='function'){
+          try{VpnNative.pickOvpnFile();return}catch(_){}
+        }
+        fileInput.value='';
+        try{ if(typeof fileInput.showPicker==='function'){fileInput.showPicker();return} }catch(_){}
+        fileInput.click();
+        return;
+      }
       case 'cancel-modal':
         if(state.modal==='installing'&&state.installRun&&!state.installRun.done)break;
         state.modal=null;state.pendingFile=null;state.copied=false;state.installRun=null;break;
@@ -938,6 +973,17 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
     if(ev.target.id==='sound-toggle')state.sound=ev.target.checked;
   });
   fileInput.onchange=()=>{const f=fileInput.files?.[0];if(!f)return;state.pendingFile=f;state.modal=/\.ovpn$/i.test(f.name)?'confirm':'invalid';renderModal()};
+  window.__vpnNativeFile=(raw)=>{
+    try{
+      const data=typeof raw==='string'?JSON.parse(raw):raw;
+      if(!data||data.error==='cancelled'||!data.name){return}
+      const name=String(data.name);
+      const ok=/\.ovpn$/i.test(name);
+      state.pendingFile={name, content:data.content||'', native:true};
+      state.modal=ok?'confirm':'invalid';
+      renderModal();
+    }catch(e){console.warn(e)}
+  };
   app.addEventListener('input',ev=>{
     if(ev.target.id!=='user-search')return;
     const pos=ev.target.selectionStart;

@@ -1,13 +1,13 @@
-# VPN Manager Android `0.1.0`
+# VPN Manager Android `0.1.1`
 
 Android app with the same OpenVPN control UI as the desktop build.
 
-- Clients connect to **Server 1**
-- **Server 2** is managed only via **GRE through Server 1**
-- In-app dry-run API (no separate backend process)
-- Embedded Web UI + native bridge
+## Fixes in 0.1.1
+- Working **Add profile from file** via native Android document picker
+- Full-bleed phone layout (no desktop frame/zoom)
+- WebChromeClient file chooser fallback
 
-## Build release APK
+## Build
 
 ```bash
 export ANDROID_HOME=$HOME/android-sdk
@@ -15,16 +15,10 @@ cd android
 ./gradlew assembleRelease
 ```
 
-APK: `app/build/outputs/apk/release/app-release-unsigned.apk`  
-(or signed `app-release.apk` when a keystore is configured)
-
 ## Install
 
+From GitHub Releases: `vpn-manager-0.1.1-android.apk`
+
 ```bash
-adb install -r app/build/outputs/apk/release/*.apk
+adb install -r vpn-manager-0.1.1-android.apk
 ```
-
-
-## Release artifact
-
-`dist/vpn-manager-0.1.0-android.apk`

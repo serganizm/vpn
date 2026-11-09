@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1-android — 2026-11-09
+
+- Fix Add profile from file on Android (native document picker)
+- Full-bleed mobile layout without desktop phone-frame zoom
+- WebChromeClient file chooser support
+
+# Changelog
+
 ## 0.1.0 — 2026-11-09
 
 First application release.
