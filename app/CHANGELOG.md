@@ -10,3 +10,10 @@ First application release.
 - `.ovpn` always uses `remote <Server1>`; Server 2 public IP is forbidden in client configs
 - Dry-run mode by default; `--mode live` enables real SSH probes
 - Remote helper scripts under `scripts/remote/`
+
+
+## 0.1.0-android — 2026-11-09
+
+- Android APK with the same OpenVPN control UI
+- In-app dry-run API (S1 bootstrap, S2 via GRE)
+- Package: `com.serganizm.vpnmanager`

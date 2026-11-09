@@ -14,6 +14,15 @@ go build -o bin/vpn-manager ./cmd/vpn-manager
 
 Then open http://127.0.0.1:8787/
 
+## Android `0.1.0`
+
+```bash
+cd android
+./gradlew assembleRelease
+```
+
+Release APK: see GitHub Releases (`vpn-manager-0.1.0-android.apk`).
+
 ## UI prototype archive
 
 Earlier HTML prototype: `interface/vpn-manager-1.html`
