@@ -30,8 +30,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   --lav:#7143d7;--selected:#ece5fc;--nav-bg:#eee6ff;--nav-fg:#7143d7;color-scheme:light
 }
 header,.navigation,.home-indicator{flex:0 0 auto}
-.status{height:34px;display:flex;align-items:center;justify-content:space-between;padding:10px 22px 0;font-size:12px;font-weight:600;line-height:1}
-.status-icons{display:flex;align-items:center;gap:6px}
+/* fake phone status bar removed */
+.status,.status-icons{display:none!important;height:0!important;padding:0!important;margin:0!important;overflow:hidden}
 .header{min-height:64px;padding:8px 16px 12px;display:flex;align-items:center;gap:12px}
 .brand{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--accent);display:grid;place-items:center}
 .brand-text{flex:1;min-width:0}
@@ -238,7 +238,6 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
 <div class="phone-shell" id="phoneShell">
 <div id="app" class="app">
   <header>
-    <div class="status"><span>9:41</span><span class="status-icons" id="statusIcons"></span></div>
     <div class="header">
       <div class="brand"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
       <div class="brand-text"><strong>VPN Manager</strong><small id="brandSub">Управление и подключение</small></div>
@@ -659,7 +658,6 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
     document.documentElement.lang=state.lang;
     document.title=t('docTitle');
     document.getElementById('brandSub').textContent=t('brandSub');
-    document.getElementById('statusIcons').innerHTML=ico('signal',15)+ico('battery',16);
     nav.setAttribute('aria-label',t('navLabel'));
     const servers=state.page==='pair-settings'?pairSettings():state.page==='users'?pairUsers():state.page==='edit-user'?userEdit():state.page==='install'?install():serverList();
     main.innerHTML=state.tab==='servers'?servers:state.tab==='settings'?settings():viewVPN();

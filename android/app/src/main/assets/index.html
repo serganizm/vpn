@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>VPN Manager Android 0.1.1</title>
+<title>VPN Manager Android 0.1.2</title>
 <style>
 :root {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-synthesis:none;}
 *{box-sizing:border-box}
@@ -36,15 +36,15 @@ html.android-app .phone-shell, body.android-app .phone-shell{
 html.android-app .app, body.android-app .app{
   width:100vw!important;height:100dvh!important;max-width:none!important;border-radius:0!important;zoom:1!important;
 }
-html.android-app .status{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+html.android-app header{padding-top:env(safe-area-inset-top,0px)}
 html.android-app .home-indicator{padding-bottom:env(safe-area-inset-bottom,0px)}
 .app.light{
   --bg:#f7f5fc;--panel:#fff;--soft:#f1ecfc;--fg:#211d35;--muted:#77748b;--border:#d8d0e6;
   --lav:#7143d7;--selected:#ece5fc;--nav-bg:#eee6ff;--nav-fg:#7143d7;color-scheme:light
 }
 header,.navigation,.home-indicator{flex:0 0 auto}
-.status{height:34px;display:flex;align-items:center;justify-content:space-between;padding:10px 22px 0;font-size:12px;font-weight:600;line-height:1}
-.status-icons{display:flex;align-items:center;gap:6px}
+/* fake phone status bar removed */
+.status,.status-icons{display:none!important;height:0!important;padding:0!important;margin:0!important;overflow:hidden}
 .header{min-height:64px;padding:8px 16px 12px;display:flex;align-items:center;gap:12px}
 .brand{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--accent);display:grid;place-items:center}
 .brand-text{flex:1;min-width:0}
@@ -251,7 +251,6 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
 <div class="phone-shell" id="phoneShell">
 <div id="app" class="app">
   <header>
-    <div class="status"><span>9:41</span><span class="status-icons" id="statusIcons"></span></div>
     <div class="header">
       <div class="brand"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
       <div class="brand-text"><strong>VPN Manager</strong><small id="brandSub">Управление и подключение</small></div>
@@ -278,7 +277,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
     appVersion:'0.1.0',appMode:'dry-run',apiOnline:false
   };
   const app=document.getElementById('app'),shell=document.getElementById('phoneShell'),main=document.getElementById('main'),nav=document.getElementById('nav'),modalRoot=document.getElementById('modalRoot'),toastRoot=document.getElementById('toastRoot'),fileInput=document.getElementById('ovpnInput');
-  const APP_BUILD='0.1.1';
+  const APP_BUILD='0.1.2';
   const API=window.location.origin;
   const INSTALL_STEPS=['instSsh1','instPkg1','instOvpn1','instSsh2ViaS1','instPkg2','instOvpn2','instGre','instFirewallS2','instUser','instDns','instCheck'];
   const api=async(path,opts={})=>{
@@ -424,7 +423,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
       serverIp:'IP-адрес',ipPh:'IP или домен',sshLogin:'Логин SSH',sshPort:'SSH-порт',
       stepServers:'Серверы',stepUser:'Пользователь',stepNet:'Сеть',pairName:'Название связки',pairNamePh:'Новая VPN-связка',howConnect:'Как подключаться',maxConns:'Максимум подключений с одного конфига',next:'Далее',installHint:'v0.1: bootstrap ПК→S1→S2, затем S2 только через GRE. По умолчанию dry-run. Для ошибки в названии укажите fail.',
       settingsTitle:'Настройки',secInterface:'Интерфейс',secConnection:'Подключение',secNotifications:'Уведомления',secAbout:'О приложении',
-      language:'Язык',darkTheme:'Тёмная тема',autoConnect:'Автоподключение',killSwitch:'Kill Switch',reconnect:'Переподключение при обрыве',startup:'Запуск вместе с системой',alerts:'Уведомления о статусе',sound:'Звук',version:'Версия',versionValue:'0.1.1',
+      language:'Язык',darkTheme:'Тёмная тема',autoConnect:'Автоподключение',killSwitch:'Kill Switch',reconnect:'Переподключение при обрыве',startup:'Запуск вместе с системой',alerts:'Уведомления о статусе',sound:'Звук',version:'Версия',versionValue:'0.1.2',
       settingsHint:'Клиенты OpenVPN идут на Server 1. Управление Server 2 — только через GRE.',
       dnsDevice:'DNS устройства',dnsDeviceHint:'Как настроено на устройстве',dnsCustom:'Свой DNS',dnsCustomHint:'Указать адреса вручную',dnsAnd:'и',dnsPrimary:'Основной',dnsSecondary:'Запасной',
       routeSplit:'Раздельно',routeSplitHint:'IPlist и RU-EU через сервер 2, RU через сервер 1, остальной трафик напрямую',
@@ -462,7 +461,7 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
       serverIp:'IP address',ipPh:'IP or domain',sshLogin:'SSH login',sshPort:'SSH port',
       stepServers:'Servers',stepUser:'User',stepNet:'Network',pairName:'Pair name',pairNamePh:'New VPN pair',howConnect:'How to connect',maxConns:'Max connections per config',next:'Next',installHint:'v0.1: bootstrap PC→S1→S2, then manage S2 only via GRE. Default dry-run. Put fail in the name to preview an error.',
       settingsTitle:'Settings',secInterface:'Interface',secConnection:'Connection',secNotifications:'Notifications',secAbout:'About',
-      language:'Language',darkTheme:'Dark theme',autoConnect:'Auto-connect',killSwitch:'Kill Switch',reconnect:'Reconnect on drop',startup:'Launch at startup',alerts:'Status notifications',sound:'Sound',version:'Version',versionValue:'0.1.1',
+      language:'Language',darkTheme:'Dark theme',autoConnect:'Auto-connect',killSwitch:'Kill Switch',reconnect:'Reconnect on drop',startup:'Launch at startup',alerts:'Status notifications',sound:'Sound',version:'Version',versionValue:'0.1.2',
       settingsHint:'OpenVPN clients connect to Server 1. Server 2 admin goes only through GRE.',
       dnsDevice:'Device DNS',dnsDeviceHint:'As configured on the device',dnsCustom:'Custom DNS',dnsCustomHint:'Enter addresses manually',dnsAnd:'and',dnsPrimary:'Primary',dnsSecondary:'Secondary',
       routeSplit:'Split',routeSplitHint:'IPlist and RU-EU via server 2, RU via server 1, other traffic directly',
@@ -694,7 +693,6 @@ input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;bord
     document.documentElement.lang=state.lang;
     document.title=t('docTitle');
     document.getElementById('brandSub').textContent=t('brandSub');
-    document.getElementById('statusIcons').innerHTML=ico('signal',15)+ico('battery',16);
     nav.setAttribute('aria-label',t('navLabel'));
     const servers=state.page==='pair-settings'?pairSettings():state.page==='users'?pairUsers():state.page==='edit-user'?userEdit():state.page==='install'?install():serverList();
     main.innerHTML=state.tab==='servers'?servers:state.tab==='settings'?settings():viewVPN();

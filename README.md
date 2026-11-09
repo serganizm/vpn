@@ -14,7 +14,15 @@ go build -o bin/vpn-manager ./cmd/vpn-manager
 
 Then open http://127.0.0.1:8787/
 
-## Android `0.1.0`
+## macOS `0.1.2`
+
+Download from Releases:
+- `vpn-manager-0.1.2-darwin-arm64.zip` (Apple Silicon)
+- `vpn-manager-0.1.2-darwin-amd64.zip` (Intel)
+
+Then run `./vpn-manager` and open http://127.0.0.1:8787/
+
+## Android
 
 ```bash
 cd android

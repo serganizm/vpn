@@ -1,3 +1,9 @@
+## 0.1.2 — 2026-11-09
+
+- Remove fake phone status bar (time / battery / signal)
+- Android APK `0.1.2`
+- macOS archives: `darwin-arm64`, `darwin-amd64`
+
 # Changelog
 
 ## 0.1.1-android — 2026-11-09
