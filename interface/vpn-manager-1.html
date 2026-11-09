@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>VPN Manager — прототип</title>
+<style>
+:root {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-synthesis:none;}
+*{box-sizing:border-box}
+body{margin:0;background:#090911;min-height:100vh;min-height:100dvh;padding:12px;display:flex;justify-content:center;align-items:center;overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.phone-shell{flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:#080912;border-radius:44px;box-shadow:0 0 0 1px #665489}
+.app{
+  --bg:#10131e;--panel:#1d2233;--soft:#2b2943;--fg:#f8f7ff;--muted:#a5a9c1;--border:#48455f;
+  --accent:#8b5cf6;--lav:#b59aff;--selected:#382d55;--good:#34d399;--bad:#fb7185;--on-accent:#fff;
+  --nav-bg:#3e315f;--nav-fg:#b59aff;
+  color-scheme:dark;position:relative;width:390px;height:844px;flex:0 0 auto;zoom:1;
+  background:var(--bg);color:var(--fg);border:0;outline:0;border-radius:38px;
+  overflow:hidden;display:flex;flex-direction:column
+}
+@media (max-width:430px){
+  body{padding:0;background:#090911}
+  .phone-shell{width:100vw!important;height:100dvh!important;border-radius:0;box-shadow:none;background:transparent}
+  .app{border-radius:0}
+}
+.app.light{
+  --bg:#f7f5fc;--panel:#fff;--soft:#f1ecfc;--fg:#211d35;--muted:#77748b;--border:#d8d0e6;
+  --lav:#7143d7;--selected:#ece5fc;--nav-bg:#eee6ff;--nav-fg:#7143d7;color-scheme:light
+}
+header,.navigation,.home-indicator{flex:0 0 auto}
+.status{height:34px;display:flex;align-items:center;justify-content:space-between;padding:10px 22px 0;font-size:12px;font-weight:600;line-height:1}
+.status-icons{display:flex;align-items:center;gap:6px}
+.header{min-height:64px;padding:8px 16px 12px;display:flex;align-items:center;gap:12px}
+.brand{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--accent);display:grid;place-items:center}
+.brand-text{flex:1;min-width:0}
+.brand-text strong{display:block;font-size:16px;font-weight:700;line-height:1.2}
+.brand-text small{display:block;margin-top:2px;font-size:12px;line-height:1.2;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main{padding:4px 12px 8px;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;scrollbar-width:none;-ms-overflow-style:none}
+.main>.panel{flex:1 0 auto}
+.panel.vpn{flex:0 0 auto;padding:12px}
+.main::-webkit-scrollbar{display:none;width:0;height:0}
+.stack{display:flex;flex-direction:column;gap:12px}
+.stack.tight{gap:6px}
+.flex{display:flex;align-items:center;gap:8px;min-width:0}
+.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ico-slot{display:flex;flex:0 0 auto;color:var(--lav)}
+.title{font-size:18px;font-weight:700;line-height:1.25}
+.heading{font-size:15px;font-weight:600;line-height:1.3}
+.subtitle,.hint,.notice{margin:0;font-size:12px;line-height:1.4;color:var(--muted)}
+.subtitle{margin-top:2px}
+.notice{padding:10px 12px;border-radius:12px;background:var(--soft)}
+.page-head,.section-header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.page-head{min-height:44px}
+.page-head .titles,.section-header>.flex{flex:1;min-width:0}
+.page-head>.btn,.page-head>.pill,.section-header>.pill{flex:0 0 auto}
+.panel{background:var(--panel);padding:16px;border-radius:16px}
+.panel.settings{padding:4px 16px}
+.card{padding:14px;background:var(--panel);border-radius:16px;display:flex;flex-direction:column;gap:12px}
+.subcard{padding:12px;background:var(--soft);border-radius:12px}
+.row-title{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;line-height:1.2}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 8px;border-radius:999px;background:var(--soft);color:var(--muted);font-size:11px;font-weight:600;line-height:1;white-space:nowrap;text-align:center}
+.pill.good{color:var(--good);background:color-mix(in srgb,var(--good) 18%,transparent)}
+.pill.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,transparent)}
+.pill.status{width:116px;flex:0 0 116px;padding:0 4px}
+.settings-block{display:flex;flex-direction:column;gap:6px}
+.settings-caption{padding:2px 4px 0;font-size:12px;font-weight:600;line-height:1.2;color:var(--muted)}
+.lang-seg{display:grid;grid-template-columns:1fr 1fr;gap:3px;width:168px;flex:0 0 168px;padding:3px;border-radius:10px;background:var(--soft)}
+.lang-seg button{min-height:26px;height:26px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;padding:0 6px}
+.lang-seg button.active{background:var(--selected);color:var(--lav)}
+.setting-value{flex:0 0 auto;font-size:13px;font-weight:600;color:var(--muted)}
+.stats,.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.grid2>*{min-width:0}
+.stat{border-radius:12px;background:var(--soft);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.stat .arrow{display:flex;align-items:center;height:20px;color:var(--lav)}
+.stat strong{font-size:18px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px;line-height:1.2}
+.profile-section{background:var(--soft);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.profile-row{display:flex;align-items:center;gap:8px}
+.profile-picker{position:relative;flex:1;min-width:0}
+.profile-trigger{width:100%;height:44px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:transparent;border:1px solid var(--border);border-radius:12px;padding:0 12px;color:var(--fg);text-align:left;font-size:14px;font-weight:500}
+.profile-menu{position:absolute;z-index:20;top:calc(100% + 6px);left:0;right:0;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 30px #0006}
+.profile-option{display:flex;align-items:center;gap:4px;min-height:44px;padding:2px;border-radius:10px}
+.profile-option.active{background:var(--selected)}
+.choose-profile{flex:1;min-width:0;min-height:40px;display:flex;align-items:center;gap:8px;background:transparent;color:var(--fg);border:0;padding:0 6px;text-align:left;font-size:14px;font-weight:500}
+.tick{width:16px;height:16px;flex:0 0 16px;display:grid;place-items:center;color:var(--lav)}
+.profile-option .icon-btn{width:36px;height:36px;flex-basis:36px;border-radius:10px}
+.power-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;padding:20px 12px;background:var(--soft);border-radius:12px}
+.power{width:164px;height:164px;border:4px solid var(--accent);background:var(--soft);border-radius:50%;color:var(--lav);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:0;transition:transform .15s ease,border-color .2s ease,color .2s ease}
+.power:active{transform:scale(.96)}
+.power-symbol{display:flex;align-items:center;justify-content:center;width:46px;height:46px}
+.power span:last-child{font-size:12px;font-weight:700;letter-spacing:.04em;line-height:1}
+.connection-state{font-size:18px;font-weight:700;line-height:1.2}
+.connected .power{border-color:var(--good);color:var(--good)}
+.connected .connection-state{color:var(--good)}
+.connecting-vpn .power{border-color:var(--lav);color:var(--lav)}
+.connecting-vpn .power-symbol svg{animation:spin .9s linear infinite;transform-origin:center}
+.connecting-vpn .connection-state{color:var(--lav)}
+@media (prefers-reduced-motion:reduce){.power{transition:none}.power:active{transform:none}.connecting-vpn .power-symbol svg{animation:none}}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:28px 16px;text-align:center;background:var(--soft);border-radius:12px}
+.empty-state .ico-slot{color:var(--lav)}
+.online-line{margin:0;font-size:12px;line-height:1.3;color:var(--muted)}
+.card:not(.stale) .online-line.live{color:var(--good);font-weight:600}
+.navigation{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--panel);padding:8px 10px 4px}
+.nav-button{min-height:56px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);border:0;background:transparent;border-radius:12px;font-size:11px;font-weight:600;line-height:1}
+.nav-button .ico{display:flex;height:26px;align-items:center;justify-content:center}
+.nav-button.active{background:var(--nav-bg);color:var(--nav-fg)}
+.home-indicator{height:4px;width:105px;border-radius:20px;background:var(--fg);margin:10px auto 8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--border);background:var(--soft);color:var(--fg);font-size:14px;font-weight:600;line-height:1.1;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.block,.grid2>.btn,.dialog .grid2>.btn{width:100%}
+.icon-btn{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;padding:0;border:0;border-radius:12px;background:var(--selected);color:var(--lav)}
+.icon-btn.primary{background:var(--accent);color:var(--on-accent)}
+.icon-btn.ghost{width:36px;height:36px;flex-basis:36px;background:transparent;color:var(--fg)}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field label,.field-label{font-size:12px;font-weight:500;line-height:1.2;color:var(--muted)}
+input:not([type=range]):not([type=checkbox]),textarea,select{background-color:var(--soft);border:1px solid var(--border);border-radius:12px;color:var(--fg);min-width:0;width:100%;font-size:14px;line-height:1.2;padding:0 12px;min-height:44px}
+textarea{padding:12px;min-height:88px;resize:vertical}
+select{appearance:none;padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23a5a9c1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
+.app.light select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2377748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E")}
+input[type=range]{width:100%;height:28px;min-height:28px;margin:0;padding:0;border:0;background:transparent;accent-color:var(--accent)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;font-size:14px;font-weight:500}
+.setting-row+.setting-row{border-top:1px solid var(--border)}
+.setting-row>span,.setting-row>div.setting-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.setting-row small{font-size:11px;font-weight:500;color:var(--muted);line-height:1.2}
+.setting-row.soon{opacity:.72}
+.setting-row a{color:var(--lav);text-decoration:none;font-weight:600;font-size:13px}
+.meta-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px;font-size:14px;font-weight:500}
+.accent-num{color:var(--lav);font-weight:700;font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
+.switch{appearance:none;width:46px;height:28px;flex:0 0 46px;margin:0;padding:0;border:0;border-radius:999px;background:var(--border);position:relative}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s ease}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{left:21px}
+.server-box{display:flex;flex-direction:column;gap:6px;min-width:0}
+.server-top{display:flex;align-items:center;justify-content:space-between;min-height:18px;color:var(--lav)}
+.server-box strong{font-size:14px;font-weight:600;line-height:1.2}
+.server-box .ip{font-size:15px;font-weight:600;line-height:1.3;color:var(--muted);overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);flex:0 0 8px}
+.dot.bad{background:var(--bad)}
+.gre-box{display:flex;align-items:center;height:40px;padding:4px 10px;border-radius:8px}
+.gre-scheme{display:flex;align-items:center;gap:6px;width:100%;height:100%}
+.gre-end{flex:0 0 76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:100%;padding:2px 4px;border-radius:6px;background:var(--panel);font-size:10px;font-weight:600;line-height:1.1;text-align:center}
+.gre-link{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
+.gre-link .dash{flex:1;border-top:2px dashed var(--good)}
+.gre-scheme.fail .dash{border-color:var(--bad)}
+.gre-chip{display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 8px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;line-height:1;flex:0 0 auto}
+.pair-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pair-actions .btn{width:100%;min-height:44px;padding:0 4px;font-size:11px;gap:0}
+.card.stale .server-top,.card.stale .server-box strong,.card.stale .server-box .ip,.card.stale .metrics span,.card.stale .metrics b,.card.stale .gre-end,.card.stale .pill,.card.stale .ico-slot,.card.stale .heading,.card.stale .online-line{color:var(--muted)}
+.card.stale .dot,.card.stale .dot.bad{background:var(--muted)}
+.card.stale .gre-link .dash,.card.stale .gre-scheme.fail .dash{border-color:var(--muted)}
+.card.stale .gre-chip{background:var(--border);color:var(--muted)}
+.btn.locked{opacity:.45}
+.composer{display:flex;align-items:center;gap:8px}
+.composer input{flex:1}
+.user-row{display:flex;align-items:center;gap:10px;min-height:64px;padding:10px;border-radius:12px;background:var(--soft)}
+.limit-col{width:36px;flex:0 0 36px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.limit{width:36px;height:36px;flex:0 0 36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--selected);color:var(--lav);border:1.5px solid transparent}
+.limit.live{color:var(--good);border-color:var(--good);animation:live-ring 1.8s ease-in-out infinite}
+.limit-num{font-size:16px;font-weight:700;line-height:1}
+.limit-max{display:flex;align-items:center;justify-content:center;width:36px;height:18px;padding:0 2px;border-radius:8px;background:var(--selected);color:var(--lav);font-size:9px;font-weight:600;line-height:1;white-space:nowrap}
+@keyframes live-ring{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 45%,transparent)}50%{box-shadow:0 0 0 3px transparent}}
+@media (prefers-reduced-motion:reduce){.limit.live{animation:none}}
+.user-info{min-width:0;flex:1}
+.user-info strong{display:block;font-size:14px;font-weight:600;line-height:1.25}
+.user-info small{display:block;margin-top:2px;font-size:12px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.overlay{position:absolute;inset:0;z-index:30;background:#05050dc7;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade-in .18s ease}
+.dialog{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 16px 50px #0007;animation:dialog-in .2s ease}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+@keyframes dialog-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.overlay,.dialog{animation:none}}
+.toast-wrap{position:absolute;left:12px;right:12px;bottom:86px;z-index:40;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--border);box-shadow:0 10px 30px #0007;font-size:13px;font-weight:500;line-height:1.3;animation:dialog-in .2s ease}
+.toast span{flex:1;min-width:0}
+.toast .toast-act{border:0;background:transparent;color:var(--lav);font-weight:700;padding:6px 4px;flex:0 0 auto}
+.dialog strong{font-size:16px;font-weight:700;line-height:1.3}
+.dialog .filename{font-size:14px;line-height:1.4;overflow-wrap:anywhere;background:var(--soft);border-radius:12px;padding:12px}
+.dialog.connect{width:auto;min-width:200px;align-items:center;text-align:center;padding:28px 20px}
+.dialog.install{gap:10px;max-height:min(92vh,720px)}
+.install-head{display:flex;align-items:center;gap:10px}
+.install-head .spin{flex:0 0 auto}
+.install-steps{display:flex;flex-direction:column;gap:6px;max-height:none;overflow:visible;padding:4px 0}
+.install-step{display:flex;align-items:flex-start;gap:8px;min-height:28px;font-size:13px;line-height:1.35;color:var(--muted)}
+.install-step.active{color:var(--fg);font-weight:600}
+.install-step.done{color:var(--fg)}
+.install-step.fail{color:var(--bad)}
+.install-mark{width:22px;height:22px;flex:0 0 22px;display:grid;place-items:center;border-radius:50%;background:var(--soft);color:var(--lav)}
+.install-step.done .install-mark{background:color-mix(in srgb,var(--good) 22%,transparent);color:var(--good)}
+.install-step.fail .install-mark{background:color-mix(in srgb,var(--bad) 22%,transparent);color:var(--bad)}
+.install-step.active .install-mark{background:var(--selected)}
+.install-step.active .install-mark svg{animation:spin .9s linear infinite;transform-origin:center}
+.install-bar{height:4px;border-radius:4px;background:var(--border);overflow:hidden}
+.install-bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .35s ease}
+.install-result{padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;line-height:1.35;text-align:center}
+.install-result.ok{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.install-result.fail{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.spin{display:flex;color:var(--lav)}
+.spin svg{animation:spin .9s linear infinite;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin svg,.install-step.active .install-mark svg{animation:none}}
+.btn.danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+.hint a{color:var(--lav);text-decoration:none}
+.metrics{display:flex;flex-direction:column;gap:4px;width:100%}
+.metrics .metric-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;min-height:28px}
+.metrics span{flex:0 0 52px;font-size:11px;line-height:1.2;color:var(--muted);font-weight:500}
+.metrics b{flex:0 0 74px;width:74px;display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 6px;border-radius:8px;background:var(--panel);font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;text-align:center;white-space:nowrap}
+.stepbar{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.stepbar i{height:4px;border-radius:4px;background:var(--border)}
+.stepbar i.on{background:var(--accent)}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{display:flex;align-items:flex-start;gap:8px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--fg);text-align:left;white-space:normal}
+.choice.active{border-color:var(--accent);background:var(--selected)}
+.choice b{display:block;font-size:14px;font-weight:600;line-height:1.3}
+.choice small{display:block;margin-top:2px;color:var(--muted);font-size:12px;font-weight:500;line-height:1.35}
+.choice .tick{margin-top:2px}
+.stepper{display:flex;align-items:center;height:44px;border:1px solid var(--border);border-radius:12px;background:var(--soft);overflow:hidden}
+.stepper button{width:44px;height:44px;flex:0 0 44px;border:0;background:transparent;color:var(--lav);font-size:22px;line-height:1}
+.stepper span{flex:1;text-align:center;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.stepper span.inf{font-size:22px;font-weight:500;line-height:1}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:12px;background:var(--soft)}
+.seg button{min-height:36px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;padding:0 4px}
+.seg button.active{background:var(--selected);color:var(--lav)}
+.chips{display:flex;flex-direction:column;gap:8px}
+.chip{display:flex;align-items:center;gap:8px;min-height:40px;padding:4px 4px 4px 12px;border-radius:12px;background:var(--soft);font-size:13px;font-weight:500}
+.chip span{flex:1;min-width:0;overflow-wrap:anywhere}
+.icon-btn.tiny{width:32px;height:32px;flex-basis:32px;border-radius:8px;background:transparent;color:var(--muted)}
+.conn .meta-row{min-height:28px;font-size:13px}
+.conn .meta-row b{font-weight:600;font-variant-numeric:tabular-nums}
+.qr{display:grid;grid-template-columns:repeat(21,1fr);width:184px;height:184px;margin:4px auto;padding:8px;background:#fff;border-radius:12px}
+.qr i{background:#fff}
+.qr i.on{background:#16161f}
+</style>
+</head>
+<body>
+<div class="phone-shell" id="phoneShell">
+<div id="app" class="app">
+  <header>
+    <div class="status"><span>9:41</span><span class="status-icons" id="statusIcons"></span></div>
+    <div class="header">
+      <div class="brand"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <div class="brand-text"><strong>VPN Manager</strong><small id="brandSub">Управление и подключение</small></div>
+    </div>
+  </header>
+  <main class="main" id="main"></main>
+  <nav class="navigation" id="nav" aria-label="Основная навигация"></nav>
+  <div class="home-indicator"></div>
+  <div id="modalRoot"></div>
+  <div class="toast-wrap" id="toastRoot"></div>
+  <input id="ovpnInput" type="file" accept=".ovpn" hidden />
+</div>
+</div>
+<script>
+(() => {
+  'use strict';
+  const freshInstall=()=>({step:1,name:'',servers:[{ip:'',port:'22',login:'root',password:''},{ip:'',port:'22',login:'root',password:''}],userName:'user',userComment:'',auth:'file',limit:0,dns:'google',dnsCustom:['',''],route:'split'});
+  const node=(ip,online,cpu,ram,hdd,uptime)=>({ip,port:'22',login:'root',online,cpu,ram,hdd,uptime});
+  const state = {
+    lang:'ru',dark:true,tab:'vpn',page:'list',vpn:false,profiles:[{id:'c1',name:'Основной VPN'},{id:'c2',name:'Резервный VPN'}],selected:'c1',menu:false,
+    pairs:[
+      {id:'p1',name:'Основной VPN',session:true,gre:true,dns:'google',dnsCustom:['',''],route:'split',lists:{iplist:['198.51.100.14'],rueu:['185.220.100.0/22'],ru:['95.173.136.0/21']},a:node('185.10.20.30',true,18,41,36,'14д 6ч'),b:node('89.20.30.40',true,11,27,22,'14д 6ч')},
+      {id:'p2',name:'Резервный VPN',session:false,gre:false,dns:'cloudflare',dnsCustom:['',''],route:'via1',lists:{iplist:[],rueu:[],ru:['77.88.8.0/24']},a:node('203.0.113.10',true,44,63,71,'3д 2ч'),b:node('203.0.113.20',false,null,null,null,'—')}
+    ],pairId:'p1',listTab:'iplist',ipDraft:'',
+    users:[
+      {id:1,pair:'p1',name:'Galaxy Fold',comment:'Личный телефон',password:'',limit:0,auth:'file',connections:[{client:'91.224.12.40',vpn:'10.8.0.6',online:'2ч 14м',traffic:'1.2 ГБ'}]},
+      {id:2,pair:'p1',name:'MacBook',comment:'Рабочий ноутбук',password:'',limit:3,auth:'login',connections:[{client:'91.224.12.41',vpn:'10.8.0.8',online:'6ч 02м',traffic:'840 МБ'},{client:'91.224.40.10',vpn:'10.8.0.9',online:'18м',traffic:'42 МБ'}]},
+      {id:3,pair:'p1',name:'Linux',comment:'Omarchy',password:'',limit:1,auth:'file',connections:[]},
+      {id:4,pair:'p2',name:'iPad',comment:'Планшет',password:'',limit:2,auth:'file',connections:[{client:'85.140.3.20',vpn:'10.9.0.4',online:'1ч 05м',traffic:'310 МБ'}]}
+    ],userId:1,
+    auto:true,kill:false,reconnect:true,startup:false,alerts:true,sound:false,modal:null,connectingId:null,vpnBusy:false,installRun:null,pendingFile:null,notice:'',copied:false,userQuery:'',toast:null,undoUser:null,install:freshInstall()
+  };
+  const app=document.getElementById('app'),shell=document.getElementById('phoneShell'),main=document.getElementById('main'),nav=document.getElementById('nav'),modalRoot=document.getElementById('modalRoot'),toastRoot=document.getElementById('toastRoot'),fileInput=document.getElementById('ovpnInput');
+  const APP_BUILD='2026.11.04';
+  const INSTALL_STEPS=['instSsh1','instPkg1','instOvpn1','instSsh2','instPkg2','instOvpn2','instGre','instUser','instDns','instCheck'];
+  // Корпус ~6.1" телефона (iPhone 14/15). Внешняя рамка = реальные мм на текущем мониторе.
+  const PHONE_BODY_MM={w:71.5,h:147};
+  const DESIGN_PX={w:390,h:844};
+  // Логические CSS-размеры после scale 1.25 (hyprctl) и физический размер панели.
+  const KNOWN_MONITORS=[
+    {w:2752,h:1152,mmW:800,mmH:330}, // Xiaomi Mi Monitor DP-1
+    {w:1536,h:864,mmW:340,mmH:190}   // Laptop eDP-2
+  ];
+  const cssMmPerPx=()=>{
+    const el=document.createElement('div');
+    el.style.cssText='position:fixed;left:-9999px;top:0;width:100mm;height:1px;visibility:hidden;pointer-events:none';
+    document.body.appendChild(el);
+    const px=el.getBoundingClientRect().width/100;
+    el.remove();
+    return px||(96/25.4);
+  };
+  const estimatePxPerMm=()=>{
+    const sw=window.screen?.width||0, sh=window.screen?.height||0;
+    const hit=KNOWN_MONITORS.find(m=>Math.abs(m.w-sw)<=4&&Math.abs(m.h-sh)<=4)
+      ||KNOWN_MONITORS.find(m=>Math.abs(m.w-sw)<=4)
+      ||KNOWN_MONITORS.find(m=>Math.abs(m.h-sh)<=4);
+    if(hit)return hit.w/hit.mmW;
+    return cssMmPerPx();
+  };
+  const applyPhysicalPhoneSize=()=>{
+    const narrow=window.matchMedia('(max-width:430px)').matches;
+    const pad=narrow?0:24;
+    const pxPerMm=estimatePxPerMm();
+    let shellW=PHONE_BODY_MM.w*pxPerMm;
+    let shellH=PHONE_BODY_MM.h*pxPerMm;
+    const maxW=Math.max(120,window.innerWidth-pad);
+    const maxH=Math.max(120,window.innerHeight-pad);
+    const room=Math.min(maxW/shellW,maxH/shellH,1);
+    shellW*=room;shellH*=room;
+    const scale=Math.min(shellW/DESIGN_PX.w,shellH/DESIGN_PX.h);
+    shell.style.width=`${shellW}px`;
+    shell.style.height=`${shellH}px`;
+    shell.style.borderRadius=narrow?'0':`${12*pxPerMm*room}px`;
+    app.style.zoom=String(Math.max(0.2,scale));
+    app.style.borderRadius=narrow?'0':`${10*pxPerMm*room/Math.max(scale,0.01)}px`;
+  };
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const iconPaths={
+    shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+    moon:'<path d="M20.985 12.486A9 9 0 0 1 11.514 3.015a9 9 0 1 0 9.47 9.47"/>',
+    signal:'<path d="M3 20v-3m6 3v-7m6 7V9m6 11V4"/>',
+    battery:'<rect x="2" y="6" width="18" height="12" rx="2"/><path d="M22 10v4"/><path d="M5 9h12v6H5z" fill="currentColor" stroke="none"/>',
+    down:'<path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/>',
+    up:'<path d="M12 21V9m-5 5 5-5 5 5M4 7V3h16v4"/>',
+    power:'<path d="M12 2v10"/><path d="M6.8 5.8a9 9 0 1 0 10.4 0"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    refresh:'<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>',
+    chevronDown:'<path d="m6 9 6 6 6-6"/>',chevronUp:'<path d="m18 15-6-6-6 6"/>',
+    pencil:'<path d="m16.862 3.487 3.65 3.65a1.5 1.5 0 0 1 0 2.12L9.9 19.87 4 21l1.13-5.9L15.74 4.49a1.5 1.5 0 0 1 2.12 0z"/>',
+    check:'<path d="m20 6-11 11-5-5"/>',
+    servers:'<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/>',
+    users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    settings:'<path d="M3 6h3.4M12.6 6H21M3 12h8.4M18.6 12H21M3 18h5.4M14.6 18H21"/><circle cx="8" cy="6" r="2.2"/><circle cx="15.5" cy="12" r="2.2"/><circle cx="11" cy="18" r="2.2"/>',
+    monitor:'<rect x="2" y="3" width="15" height="12" rx="2"/><path d="M8 15v4m-4 0h8"/><rect x="18" y="10" width="4" height="10" rx="1"/>',
+    network:'<rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M12 8v4M5 16v-4h14v4"/>',
+    back:'<path d="m12 19-7-7 7-7M5 12h14"/>',
+    trash:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>',
+    download:'<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+    x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  };
+  const ico=(name,size=20)=>`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block;flex-shrink:0">${iconPaths[name]||''}</svg>`;
+  const currentPair=()=>state.pairs.find(p=>p.id===state.pairId)||state.pairs[0];
+  const currentUser=()=>state.users.find(x=>x.id===state.userId);
+  const configUrl=u=>`https://vpn.local/config/${u.id}.ovpn`;
+  const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+  let viewKey='';
+  let connectTimer=0;
+  let vpnTimer=0;
+  let installTimer=0;
+  let toastTimer=0;
+  let undoTimer=0;
+  const I18N={
+    ru:{
+      docTitle:'VPN Manager — прототип',brandSub:'Управление и подключение',toggleTheme:'Переключить тему',navLabel:'Основная навигация',
+      navServers:'Серверы',navSettings:'Настройки',
+      vpnHeading:'Подключение',vpnProtocol:'Протокол OpenVPN',vpnOn:'Активно',vpnOff:'Отключено',
+      received:'Получено',sent:'Отправлено',profile:'Профиль',addProfile:'Добавить профиль из файла',chooseProfile:'Выбрать профиль',renameProfile:'Переименовать профиль',
+      powerOn:'ОТКЛЮЧИТЬ',powerOff:'ПОДКЛЮЧИТЬ',linkOn:'Подключено',linkOff:'Не подключено',linkWait:'Подключение…',
+      disconnect:'Отключиться',connect:'Подключиться',configure:'Настройка',users:'Пользователи',install:'Установить',
+      statusOff:'Отключено',statusOn:'Подключено',statusBad:'Проблема',onlineCount:'{n} онлайн',needSession:'Сначала подключитесь к серверу',
+      routes:'Маршруты',dnsClient:'DNS клиента',addrLists:'Списки адресов',applySettings:'Применить настройки',settingsApplied:'Настройки применены в прототипе.',back:'Назад',
+      noComment:'Без комментария',editUser:'Настроить пользователя',newUserPh:'Новый пользователь',addUser:'Добавить пользователя',noUsers:'Пользователей пока нет.',searchUsers:'Поиск пользователей',
+      noProfiles:'Нет VPN-профилей',noProfilesHint:'Добавьте конфигурацию .ovpn, чтобы подключиться.',
+      comingSoon:'Скоро',build:'Сборка',source:'Исходники',gitHub:'GitHub',
+      undo:'Отменить',userDeleted:'Пользователь удалён',linkCopiedToast:'Ссылка скопирована',
+      installFailHint:'Для проверки ошибки укажите в названии «fail».',
+      userTitle:'Пользователь',configBtn:'Конфигурация',connections:'Подключения',clientIp:'IP клиента',vpnAddr:'VPN-адрес',online:'В сети',traffic:'Трафик',noConns:'Нет активных подключений.',
+      userName:'Имя пользователя',comment:'Комментарий',password:'Пароль',simultaneous:'Одновременные подключения',save:'Сохранить',deleteUser:'Удалить пользователя',
+      serverIp:'IP-адрес',ipPh:'IP или домен',sshLogin:'Логин SSH',sshPort:'SSH-порт',
+      stepServers:'Серверы',stepUser:'Пользователь',stepNet:'Сеть',pairName:'Название связки',pairNamePh:'Новая VPN-связка',howConnect:'Как подключаться',maxConns:'Максимум подключений с одного конфига',next:'Далее',installHint:'Демонстрация: SSH и установка VPN не выполняются. Для ошибки в названии укажите fail.',
+      settingsTitle:'Настройки',secInterface:'Интерфейс',secConnection:'Подключение',secNotifications:'Уведомления',secAbout:'О приложении',
+      language:'Язык',darkTheme:'Тёмная тема',autoConnect:'Автоподключение',killSwitch:'Kill Switch',reconnect:'Переподключение при обрыве',startup:'Запуск вместе с системой',alerts:'Уведомления о статусе',sound:'Звук',version:'Версия',versionValue:'Прототип',
+      settingsHint:'Параметры демонстрационные и не меняют сетевые настройки устройства.',
+      dnsDevice:'DNS устройства',dnsDeviceHint:'Как настроено на устройстве',dnsCustom:'Свой DNS',dnsCustomHint:'Указать адреса вручную',dnsAnd:'и',dnsPrimary:'Основной',dnsSecondary:'Запасной',
+      routeSplit:'Раздельно',routeSplitHint:'IPlist и RU-EU через сервер 2, RU через сервер 1, остальной трафик напрямую',
+      routeVia:'Через сервер 1',routeViaHint:'IPlist и RU-EU через сервер 2, RU и остальной трафик через сервер 1',
+      routeAll:'Весь трафик',routeAllHint:'Весь трафик идёт через сервер 2',
+      authFile:'Только файл',authFileHint:'Подключение по файлу конфигурации',authLogin:'Файл и логин',authLoginHint:'Кроме файла нужны логин и пароль',
+      iplistBefore:'IPlist загружается при первом запуске с ',iplistAfter:'. Ниже только свои адреса.',refresh:'Обновить с сайта',delAddr:'Удалить адрес',noOwn:'Своих адресов пока нет.',noAddr:'В списке пока нет адресов.',ipOrNet:'IP или подсеть',addAddr:'Добавить адрес',less:'Меньше',more:'Больше',
+      addProfileQ:'Добавить VPN-профиль?',fileChosen:'Выбран файл OpenVPN:',cancel:'Отмена',add:'Добавить',fileHint:'В прототипе сохраняется только название, реальный VPN не запускается.',
+      badFile:'Неверный формат файла',badFileHint:'Выберите конфигурацию с расширением .ovpn.',close:'Закрыть',renameTitle:'Изменить название профиля',nameLabel:'Название',
+      copied:'Ссылка скопирована.',copy:'Копировать',download:'Скачать',configHint:'Ссылка, QR и кнопка «Скачать» дают доступ к файлу конфигурации. В прототипе скачивается демо-.ovpn.',
+      deleteQ:'Удалить пользователя?',deleteBody:'{name} пропадёт из списка этой связки.',delete:'Удалить',connecting:'Подключение',connectingHint:'Соединение с сервером…',
+      installProgress:'Установка',installWait:'Идёт установка на серверы…',installOk:'Установка завершена успешно',installFail:'Установка завершилась с ошибкой',downloadLog:'Скачать лог',
+      instSsh1:'Подключение по SSH к серверу 1',instPkg1:'Обновление пакетов на сервере 1',instOvpn1:'Установка OpenVPN на сервере 1',
+      instSsh2:'Подключение по SSH к серверу 2',instPkg2:'Обновление пакетов на сервере 2',instOvpn2:'Установка OpenVPN на сервере 2',
+      instGre:'Настройка GRE-туннеля',instUser:'Создание пользователя и конфигурации',instDns:'Применение DNS и маршрутов',instCheck:'Проверка туннеля и сервисов',
+      needServers:'Укажите название, IP, порт, логин и пароль обоих серверов.',needUser:'Укажите имя пользователя.',needDns:'Укажите свой DNS.',
+      installed:'Связка добавлена в прототип. Установка на серверы не выполнялась.',iplistRefreshed:'IPlist обновлён. В прототипе список с iplist.opencck.org/ru не скачивается.',badIp:'Введите IP-адрес или подсеть.',saved:'Изменения сохранены в прототипе.'
+    },
+    en:{
+      docTitle:'VPN Manager — prototype',brandSub:'Manage and connect',toggleTheme:'Toggle theme',navLabel:'Main navigation',
+      navServers:'Servers',navSettings:'Settings',
+      vpnHeading:'Connection',vpnProtocol:'OpenVPN protocol',vpnOn:'Active',vpnOff:'Off',
+      received:'Received',sent:'Sent',profile:'Profile',addProfile:'Add profile from file',chooseProfile:'Choose profile',renameProfile:'Rename profile',
+      powerOn:'DISCONNECT',powerOff:'CONNECT',linkOn:'Connected',linkOff:'Not connected',linkWait:'Connecting…',
+      disconnect:'Disconnect',connect:'Connect',configure:'Configure',users:'Users',install:'Install',
+      statusOff:'Disconnected',statusOn:'Connected',statusBad:'Problem',onlineCount:'{n} online',needSession:'Connect to the server first',
+      routes:'Routes',dnsClient:'Client DNS',addrLists:'Address lists',applySettings:'Apply settings',settingsApplied:'Settings applied in the prototype.',back:'Back',
+      noComment:'No comment',editUser:'Edit user',newUserPh:'New user',addUser:'Add user',noUsers:'No users yet.',searchUsers:'Search users',
+      noProfiles:'No VPN profiles',noProfilesHint:'Add an .ovpn configuration to connect.',
+      comingSoon:'Coming soon',build:'Build',source:'Source',gitHub:'GitHub',
+      undo:'Undo',userDeleted:'User deleted',linkCopiedToast:'Link copied',
+      installFailHint:'To preview a failure, put “fail” in the pair name.',
+      userTitle:'User',configBtn:'Configuration',connections:'Connections',clientIp:'Client IP',vpnAddr:'VPN address',online:'Online',traffic:'Traffic',noConns:'No active connections.',
+      userName:'Username',comment:'Comment',password:'Password',simultaneous:'Simultaneous connections',save:'Save',deleteUser:'Delete user',
+      serverIp:'IP address',ipPh:'IP or domain',sshLogin:'SSH login',sshPort:'SSH port',
+      stepServers:'Servers',stepUser:'User',stepNet:'Network',pairName:'Pair name',pairNamePh:'New VPN pair',howConnect:'How to connect',maxConns:'Max connections per config',next:'Next',installHint:'Demo: SSH and VPN installation are not performed. Put fail in the name to preview an error.',
+      settingsTitle:'Settings',secInterface:'Interface',secConnection:'Connection',secNotifications:'Notifications',secAbout:'About',
+      language:'Language',darkTheme:'Dark theme',autoConnect:'Auto-connect',killSwitch:'Kill Switch',reconnect:'Reconnect on drop',startup:'Launch at startup',alerts:'Status notifications',sound:'Sound',version:'Version',versionValue:'Prototype',
+      settingsHint:'These options are a demo and do not change the device network settings.',
+      dnsDevice:'Device DNS',dnsDeviceHint:'As configured on the device',dnsCustom:'Custom DNS',dnsCustomHint:'Enter addresses manually',dnsAnd:'and',dnsPrimary:'Primary',dnsSecondary:'Secondary',
+      routeSplit:'Split',routeSplitHint:'IPlist and RU-EU via server 2, RU via server 1, other traffic directly',
+      routeVia:'Via server 1',routeViaHint:'IPlist and RU-EU via server 2, RU and other traffic via server 1',
+      routeAll:'All traffic',routeAllHint:'All traffic goes through server 2',
+      authFile:'File only',authFileHint:'Connect with a configuration file',authLogin:'File and login',authLoginHint:'A login and password are required in addition to the file',
+      iplistBefore:'IPlist is loaded on first launch from ',iplistAfter:'. Only your own addresses are listed below.',refresh:'Update from site',delAddr:'Remove address',noOwn:'No custom addresses yet.',noAddr:'No addresses in this list yet.',ipOrNet:'IP or subnet',addAddr:'Add address',less:'Decrease',more:'Increase',
+      addProfileQ:'Add VPN profile?',fileChosen:'Selected OpenVPN file:',cancel:'Cancel',add:'Add',fileHint:'The prototype stores the name only. A real VPN is not started.',
+      badFile:'Invalid file format',badFileHint:'Choose a configuration with the .ovpn extension.',close:'Close',renameTitle:'Rename profile',nameLabel:'Name',
+      copied:'Link copied.',copy:'Copy',download:'Download',configHint:'The link, QR, and Download button provide the configuration file. The prototype downloads a demo .ovpn.',
+      deleteQ:'Delete user?',deleteBody:'{name} will be removed from this pair.',delete:'Delete',connecting:'Connecting',connectingHint:'Connecting to the server…',
+      installProgress:'Installation',installWait:'Installing on the servers…',installOk:'Installation completed successfully',installFail:'Installation failed',downloadLog:'Download log',
+      instSsh1:'SSH connection to server 1',instPkg1:'Updating packages on server 1',instOvpn1:'Installing OpenVPN on server 1',
+      instSsh2:'SSH connection to server 2',instPkg2:'Updating packages on server 2',instOvpn2:'Installing OpenVPN on server 2',
+      instGre:'Configuring the GRE tunnel',instUser:'Creating user and configuration',instDns:'Applying DNS and routes',instCheck:'Checking tunnel and services',
+      needServers:'Enter the name, IP, port, login, and password for both servers.',needUser:'Enter a username.',needDns:'Enter a custom DNS.',
+      installed:'The pair was added to the prototype. Nothing was installed on the servers.',iplistRefreshed:'IPlist refreshed. The prototype does not download the list from iplist.opencck.org/ru.',badIp:'Enter an IP address or subnet.',saved:'Changes saved in the prototype.'
+    }
+  };
+  const t=key=>I18N[state.lang][key]??I18N.ru[key]??key;
+  const DEMO={
+    'Основной VPN':['Основной VPN','Main VPN'],
+    'Резервный VPN':['Резервный VPN','Backup VPN'],
+    'Личный телефон':['Личный телефон','Personal phone'],
+    'Рабочий ноутбук':['Рабочий ноутбук','Work laptop'],
+    'Планшет':['Планшет','Tablet'],
+    '14д 6ч':['14д 6ч','14d 6h'],
+    '3д 2ч':['3д 2ч','3d 2h'],
+    '2ч 14м':['2ч 14м','2h 14m'],
+    '6ч 02м':['6ч 02м','6h 02m'],
+    '18м':['18м','18m'],
+    '1ч 05м':['1ч 05м','1h 05m'],
+    '0м':['0м','0m'],
+    '1.2 ГБ':['1.2 ГБ','1.2 GB'],
+    '840 МБ':['840 МБ','840 MB'],
+    '42 МБ':['42 МБ','42 MB'],
+    '310 МБ':['310 МБ','310 MB']
+  };
+  const tx=s=>{const row=DEMO[s];return row?row[state.lang==='en'?1:0]:s};
+  const canon=s=>{for(const key of Object.keys(DEMO)){const row=DEMO[key];if(s===row[0]||s===row[1])return key}return s};
+  const serverLabel=n=>state.lang==='en'?`Server ${n}`:`Сервер ${n}`;
+  const pairsSubtitle=n=>{
+    if(state.lang==='en')return `${n} ${n===1?'VPN pair':'VPN pairs'}`;
+    const n10=n%10,n100=n%100;
+    const word=n10===1&&n100!==11?'VPN-связка':n10>=2&&n10<=4&&(n100<10||n100>=20)?'VPN-связки':'VPN-связок';
+    return `${n} ${word}`;
+  };
+  const dnsOptions=()=>[['device',t('dnsDevice'),t('dnsDeviceHint')],['google','Google',`8.8.8.8 ${t('dnsAnd')} 8.8.4.4`],['cloudflare','Cloudflare',`1.1.1.1 ${t('dnsAnd')} 1.0.0.1`],['custom',t('dnsCustom'),t('dnsCustomHint')]];
+  const routeOptions=()=>[['split',t('routeSplit'),t('routeSplitHint')],['via1',t('routeVia'),t('routeViaHint')],['all2',t('routeAll'),t('routeAllHint')]];
+  const authOptions=()=>[['file',t('authFile'),t('authFileHint')],['login',t('authLogin'),t('authLoginHint')]];
+  const field=(label,id,value,more='')=>`<div class="form-field"><label for="${id}">${label}</label><input id="${id}" value="${esc(value)}" autocomplete="off" ${more}></div>`;
+  const button=(label,action,opts={})=>{
+    const cls=['btn',opts.primary?'primary':'',opts.danger?'danger':'',opts.block?'block':'',opts.locked?'locked':''].filter(Boolean).join(' ');
+    const id=opts.id!=null?` data-id="${esc(opts.id)}"`:'';
+    const title=opts.title?` title="${esc(opts.title)}"`:'';
+    return `<button class="${cls}" data-action="${action}"${id}${title}>${opts.icon?ico(opts.icon,opts.iconSize||14):''}<span>${label}</span></button>`;
+  };
+  const notice=()=>state.notice?`<p class="notice">${esc(t(state.notice))}</p>`:'';
+  const showToast=(message,actionLabel,actionId)=>{
+    clearTimeout(toastTimer);
+    state.toast={message,actionLabel,actionId};
+    renderToast();
+    toastTimer=setTimeout(()=>{state.toast=null;renderToast()},5000);
+  };
+  const renderToast=()=>{
+    if(!state.toast){toastRoot.innerHTML='';return}
+    const a=state.toast.actionLabel&&state.toast.actionId?`<button type="button" class="toast-act" data-action="${state.toast.actionId}">${esc(state.toast.actionLabel)}</button>`:'';
+    toastRoot.innerHTML=`<div class="toast" role="status"><span>${esc(state.toast.message)}</span>${a}</div>`;
+  };
+  const onlineForPair=id=>state.users.filter(u=>u.pair===id).reduce((n,u)=>n+u.connections.length,0);
+  const back=(title,subtitle='')=>`<div class="page-head"><button class="icon-btn ghost" data-action="back-servers" aria-label="${t('back')}">${ico('back',20)}</button><div class="titles"><div class="title">${esc(title)}</div>${subtitle?`<div class="subtitle">${esc(subtitle)}</div>`:''}</div></div>`;
+  const choiceList=(action,items,current)=>`<div class="choices">${items.map(([id,title,text])=>`<button type="button" class="choice ${current===id?'active':''}" data-action="${action}" data-id="${id}"><span class="tick">${current===id?ico('check',14):''}</span><span><b>${title}</b><small>${text}</small></span></button>`).join('')}</div>`;
+  const limitText=n=>n?`max ${n}`:'max ∞';
+  const stepper=n=>`<div class="stepper"><button type="button" data-action="limit-dec" aria-label="${t('less')}">−</button><span class="${n?'':'inf'}">${n?n:'∞'}</span><button type="button" data-action="limit-inc" aria-label="${t('more')}">+</button></div>`;
+  const metric=(label,value)=>`<div class="metric-row"><span>${label}</span><b>${esc(value)}</b></div>`;
+  const metrics=s=>`<div class="metrics">${metric('CPU',s.online&&s.cpu!=null?s.cpu+'%':'—')}${metric('RAM',s.online&&s.ram!=null?s.ram+'%':'—')}${metric('HDD',s.online&&s.hdd!=null?s.hdd+'%':'—')}${metric('UpTime',s.online?tx(s.uptime):'—')}</div>`;
+  const dnsBlock=model=>{const custom=model.dns==='custom'?`<div class="grid2">${field(t('dnsPrimary'),'dns-0',model.dnsCustom[0],'placeholder="8.8.8.8"')}${field(t('dnsSecondary'),'dns-1',model.dnsCustom[1],'placeholder="1.1.1.1"')}</div>`:'';return `${choiceList('set-dns',dnsOptions(),model.dns)}${custom}`};
+  const steps=n=>`<div class="stepbar">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
+  function syncForm(){
+    const w=state.install;
+    const name=document.getElementById('install-name');
+    if(name)w.name=canon(name.value);
+    const user=document.getElementById('install-user'); if(user)w.userName=canon(user.value);
+    const comment=document.getElementById('install-comment'); if(comment)w.userComment=canon(comment.value);
+    w.servers.forEach((s,i)=>{for(const k of ['ip','login','port','password']){const el=document.getElementById(`install-${k}-${i}`);if(el)s[k]=el.value}});
+    const model=state.page==='install'?w:currentPair();
+    const d0=document.getElementById('dns-0'),d1=document.getElementById('dns-1');
+    if(d0&&model)model.dnsCustom[0]=d0.value;
+    if(d1&&model)model.dnsCustom[1]=d1.value;
+    const u=currentUser();
+    const un=document.getElementById('user-name'),uc=document.getElementById('user-comment'),up=document.getElementById('user-password');
+    if(un&&u)u.name=canon(un.value);
+    if(uc&&u)u.comment=canon(uc.value);
+    if(up&&u)u.password=up.value;
+    const ip=document.getElementById('ip-add');
+    if(ip)state.ipDraft=ip.value;
+    const uq=document.getElementById('user-search');
+    if(uq)state.userQuery=uq.value;
+  }
+  function listEditor(p){
+    const tabs=[['iplist','IPlist'],['rueu','RU-EU'],['ru','RU']];
+    const key=state.listTab;
+    const items=p.lists[key]||[];
+    const note=key==='iplist'?`<p class="hint">${t('iplistBefore')}<a href="https://iplist.opencck.org/ru" target="_blank" rel="noreferrer">iplist.opencck.org/ru</a>${t('iplistAfter')}</p>${button(t('refresh'),'refresh-iplist',{block:true,icon:'refresh'})}`:'';
+    const rows=items.length?`<div class="chips">${items.map((ip,i)=>`<div class="chip"><span>${esc(ip)}</span><button type="button" class="icon-btn tiny" data-action="del-ip" data-id="${key}:${i}" aria-label="${t('delAddr')}">${ico('trash',14)}</button></div>`).join('')}</div>`:`<p class="hint">${key==='iplist'?t('noOwn'):t('noAddr')}</p>`;
+    return `<div class="seg">${tabs.map(([id,label])=>`<button type="button" class="${state.listTab===id?'active':''}" data-action="list-tab" data-id="${id}">${label}</button>`).join('')}</div>${note}${rows}<div class="composer"><input id="ip-add" placeholder="${t('ipOrNet')}" autocomplete="off" value="${esc(state.ipDraft||'')}"><button type="button" class="icon-btn primary" data-action="add-ip" aria-label="${t('addAddr')}">${ico('plus',26)}</button></div>`;
+  }
+  function qrMarkup(text){
+    const n=21; let h=2166136261;
+    for(let i=0;i<text.length;i++)h=Math.imul(h^text.charCodeAt(i),16777619);
+    const cells=[];
+    const finder=(r,c)=>{for(const [br,bc] of [[0,0],[0,n-7],[n-7,0]]){if(r<br||r>=br+7||c<bc||c>=bc+7)continue;const rr=r-br,cc=c-bc;return rr===0||cc===0||rr===6||cc===6||(rr>=2&&rr<=4&&cc>=2&&cc<=4)}return null};
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++){const f=finder(r,c);h=Math.imul(h^((r+1)*31+c),16777619);const on=f===null?(h>>>0)%3!==0:f;cells.push(`<i class="${on?'on':''}"></i>`)}
+    return `<div class="qr" aria-hidden="true">${cells.join('')}</div>`;
+  }
+  function viewVPN(){
+    const selected=state.profiles.find(x=>x.id===state.selected);
+    const hasProfiles=state.profiles.length>0;
+    const menu=state.menu&&hasProfiles?`<div class="profile-menu">${state.profiles.map(p=>`<div class="profile-option ${p.id===state.selected?'active':''}"><button class="choose-profile" data-action="choose-profile" data-id="${esc(p.id)}"><span class="tick">${p.id===state.selected?ico('check',14):''}</span><span class="truncate">${esc(tx(p.name))}</span></button><button class="icon-btn" aria-label="${t('renameProfile')}" data-action="rename-profile" data-id="${esc(p.id)}">${ico('pencil',22)}</button></div>`).join('')}</div>`:'';
+    const profileBlock=hasProfiles
+      ?`<div class="profile-section"><span class="field-label">${t('profile')}</span><div class="profile-row"><button class="icon-btn primary" data-action="pick-file" aria-label="${t('addProfile')}">${ico('plus',26)}</button>
+      <div class="profile-picker"><button class="profile-trigger" data-action="toggle-profiles"><span class="truncate">${esc(selected?tx(selected.name):t('chooseProfile'))}</span>${ico(state.menu?'chevronUp':'chevronDown',18)}</button>${menu}</div></div></div>`
+      :`<div class="empty-state"><span class="ico-slot">${ico('shield',36)}</span><strong>${t('noProfiles')}</strong><p class="hint">${t('noProfilesHint')}</p>${button(t('addProfile'),'pick-file',{primary:true,icon:'plus',iconSize:16})}</div>`;
+    const busy=state.vpnBusy;
+    const stateCls=busy?'connecting-vpn':state.vpn?'connected':'';
+    const stateText=busy?t('linkWait'):state.vpn?t('linkOn'):t('linkOff');
+    const powerLabel=busy?t('linkWait'):state.vpn?t('powerOn'):t('powerOff');
+    return `<div class="panel vpn stack ${stateCls}">
+      <div class="section-header"><div><span class="heading">${t('vpnHeading')}</span><div class="subtitle">${t('vpnProtocol')}</div></div></div>
+      <div class="stats"><div class="stat"><span class="arrow">${ico('down',18)}</span><strong>${state.vpn?'24.8 MB':'0 B'}</strong><small>${t('received')}</small></div><div class="stat"><span class="arrow">${ico('up',18)}</span><strong>${state.vpn?'4.2 MB':'0 B'}</strong><small>${t('sent')}</small></div></div>
+      ${profileBlock}
+      <div class="power-card"><button class="power" data-action="toggle-vpn" ${!hasProfiles||busy?'disabled':''}><span class="power-symbol">${ico(busy?'refresh':'power',46)}</span><span>${powerLabel}</span></button><div class="connection-state">${stateText}</div></div>
+    </div>`;
+  }
+  function serverCard(p){
+    const link=p.session?button(t('disconnect'),'toggle-session',{danger:true,id:p.id}):button(t('connect'),'toggle-session',{id:p.id});
+    const status=!p.session?{cls:'',text:t('statusOff')}:p.gre?{cls:'good',text:t('statusOn')}:{cls:'bad',text:t('statusBad')};
+    const online=onlineForPair(p.id);
+    const onlineLine=p.session?`<p class="online-line ${online?'live':''}">${t('onlineCount').replace('{n}',online)}</p>`:`<p class="online-line">${t('needSession')}</p>`;
+    const locked=!p.session;
+    return `<section class="card${p.session?'':' stale'}">
+      <div class="section-header"><div class="flex"><span class="ico-slot">${ico('network',18)}</span><strong class="heading truncate">${esc(tx(p.name))}</strong></div><span class="pill status ${status.cls}">${status.text}</span></div>
+      ${onlineLine}
+      <div class="grid2">
+        <div class="subcard server-box"><div class="server-top">${ico('servers',16)}<span class="dot ${p.a.online?'':'bad'}"></span></div><strong>${serverLabel(1)}</strong><span class="ip">${esc(p.a.ip)}</span>${metrics(p.a)}</div>
+        <div class="subcard server-box"><div class="server-top">${ico('servers',16)}<span class="dot ${p.b.online?'':'bad'}"></span></div><strong>${serverLabel(2)}</strong><span class="ip">${esc(p.b.ip)}</span>${metrics(p.b)}</div>
+      </div>
+      <div class="subcard gre-box">
+        <div class="gre-scheme ${p.gre?'':'fail'}">
+          <div class="gre-end"><span class="dot"></span><span>${serverLabel(1)}</span></div>
+          <div class="gre-link"><span class="dash"></span><span class="gre-chip">GRE</span><span class="dash"></span></div>
+          <div class="gre-end"><span class="dot ${p.gre?'':'bad'}"></span><span>${serverLabel(2)}</span></div>
+        </div>
+      </div>
+      <div class="pair-actions">${link}${button(t('configure'),'settings-pair',{id:p.id,locked,title:locked?t('needSession'):''})}${button(t('users'),'users-pair',{primary:true,id:p.id,locked,title:locked?t('needSession'):''})}</div>
+    </section>`;
+  }
+  function serverList(){
+    const n=state.pairs.length;
+    return `<div class="stack"><div class="page-head"><div class="titles"><div class="title">${t('navServers')}</div><div class="subtitle">${pairsSubtitle(n)}</div></div>${button(t('install'),'open-install',{primary:true,icon:'plus'})}</div>${state.pairs.map(serverCard).join('')}${notice()}</div>`;
+  }
+  function pairSettings(){
+    const p=currentPair();
+    return `<div class="stack">${back(t('configure'),tx(p.name))}
+      <section class="panel stack"><strong class="heading">${t('routes')}</strong>${choiceList('set-route',routeOptions(),p.route)}</section>
+      <section class="panel stack"><strong class="heading">${t('dnsClient')}</strong>${dnsBlock(p)}</section>
+      <section class="panel stack"><strong class="heading">${t('addrLists')}</strong>${listEditor(p)}</section>
+      ${notice()}${button(t('applySettings'),'apply-pair-settings',{primary:true,block:true})}
+    </div>`;
+  }
+  function userRow(u){
+    const n=u.connections.length;
+    return `<div class="user-row"><div class="limit-col"><div class="limit${n?' live':''}"><span class="limit-num">${n}</span></div><span class="limit-max">${limitText(u.limit)}</span></div><div class="user-info"><strong class="truncate">${esc(tx(u.name))}</strong><small>${esc(u.comment?tx(u.comment):t('noComment'))}</small></div><button class="icon-btn" data-action="edit-user" data-id="${u.id}" aria-label="${t('editUser')}">${ico('settings',26)}</button></div>`;
+  }
+  function pairUsers(){
+    const p=currentPair();
+    const q=(state.userQuery||'').trim().toLowerCase();
+    const list=state.users.filter(u=>u.pair===p.id).filter(u=>{
+      if(!q)return true;
+      return `${u.name} ${u.comment||''}`.toLowerCase().includes(q);
+    });
+    const rows=list.map(userRow).join('');
+    return `<div class="stack">${back(t('users'),tx(p.name))}<section class="panel stack">
+      <input id="user-search" placeholder="${t('searchUsers')}" autocomplete="off" value="${esc(state.userQuery||'')}">
+      ${rows||`<p class="hint">${t('noUsers')}</p>`}
+      <div class="composer"><input id="new-user" placeholder="${t('newUserPh')}" autocomplete="off"><button class="icon-btn primary" data-action="add-user" aria-label="${t('addUser')}">${ico('plus',26)}</button></div>
+    </section></div>`;
+  }
+  function userEdit(){
+    const u=currentUser();
+    if(!u)return pairUsers();
+    const conns=u.connections.length?u.connections.map(c=>`<article class="subcard conn"><div class="meta-row"><span>${t('clientIp')}</span><b>${esc(c.client)}</b></div><div class="meta-row"><span>${t('vpnAddr')}</span><b>${esc(c.vpn)}</b></div><div class="meta-row"><span>${t('online')}</span><b>${esc(tx(c.online))}</b></div><div class="meta-row"><span>${t('traffic')}</span><b>${esc(tx(c.traffic))}</b></div></article>`).join(''):`<p class="hint">${t('noConns')}</p>`;
+    return `<div class="stack">${back(t('userTitle'),tx(u.name))}
+      ${button(t('configBtn'),'show-config',{block:true,icon:'download'})}
+      <section class="panel stack"><strong class="heading">${t('connections')}</strong>${conns}</section>
+      <section class="panel stack"><div class="grid2">${field(t('userName'),'user-name',tx(u.name))}${field(t('comment'),'user-comment',tx(u.comment))}</div>${field(t('password'),'user-password',u.password||'','type="password"')}<div class="stack tight"><span class="field-label">${t('simultaneous')}</span>${stepper(u.limit)}</div>${button(t('save'),'save-user',{primary:true,block:true})}${button(t('deleteUser'),'delete-user',{block:true,danger:true,icon:'trash'})}${notice()}</section>
+    </div>`;
+  }
+  function serverFields(s,i){
+    return `<div class="subcard stack"><strong class="heading">${serverLabel(i+1)}</strong>${field(t('serverIp'),`install-ip-${i}`,s.ip,`placeholder="${t('ipPh')}"`)}<div class="grid2">${field(t('sshLogin'),`install-login-${i}`,s.login)}${field(t('sshPort'),`install-port-${i}`,s.port,'inputmode="numeric"')}</div>${field(t('password'),`install-password-${i}`,s.password,'type="password"')}</div>`;
+  }
+  function install(){
+    const w=state.install;
+    const titles=[t('stepServers'),t('stepUser'),t('stepNet')];
+    let body='';
+    if(w.step===1)body=`${field(t('pairName'),'install-name',tx(w.name),`placeholder="${t('pairNamePh')}"`)}${w.servers.map(serverFields).join('')}`;
+    else if(w.step===2)body=`${field(t('userName'),'install-user',tx(w.userName),'placeholder="user"')}${field(t('comment'),'install-comment',tx(w.userComment),`placeholder="${t('noComment')}"`)}<div class="stack tight"><span class="field-label">${t('howConnect')}</span>${choiceList('set-auth',authOptions(),w.auth)}</div><div class="stack tight"><span class="field-label">${t('maxConns')}</span>${stepper(w.limit)}</div>`;
+    else body=`<div class="stack tight"><span class="field-label">${t('dnsClient')}</span>${dnsBlock(w)}</div><div class="stack tight"><span class="field-label">${t('routes')}</span>${choiceList('set-route',routeOptions(),w.route)}</div><p class="hint">${t('installHint')}</p>`;
+    const navBtn=w.step===1?button(t('next'),'install-next',{primary:true,block:true}):`<div class="grid2">${button(t('back'),'install-prev')}${button(w.step===3?t('install'):t('next'),'install-next',{primary:true})}</div>`;
+    return `<div class="stack">${back(t('install'),titles[w.step-1])}${steps(w.step)}<section class="panel stack">${body}${notice()}${navBtn}</section></div>`;
+  }
+  function settings(){
+    const row=(label,id,on)=>`<label class="setting-row"><span>${label}</span><input class="switch" type="checkbox" id="${id}" ${on?'checked':''}></label>`;
+    const soon=(label)=>`<div class="setting-row soon"><div class="setting-text"><span>${label}</span><small>${t('comingSoon')}</small></div><input class="switch" type="checkbox" disabled tabindex="-1"></div>`;
+    const lang=`<div class="setting-row"><span>${t('language')}</span><div class="lang-seg" role="group" aria-label="${t('language')}"><button type="button" data-action="set-lang" data-id="ru" class="${state.lang==='ru'?'active':''}">Русский</button><button type="button" data-action="set-lang" data-id="en" class="${state.lang==='en'?'active':''}">English</button></div></div>`;
+    const block=(caption,body)=>`<div class="settings-block"><div class="settings-caption">${caption}</div><section class="panel settings">${body}</section></div>`;
+    const about=`<div class="setting-row"><span>${t('version')}</span><b class="setting-value">${t('versionValue')}</b></div>
+      <div class="setting-row"><span>${t('build')}</span><b class="setting-value">${APP_BUILD}</b></div>
+      <div class="setting-row"><span>${t('source')}</span><a href="https://github.com/serganizm" target="_blank" rel="noreferrer">${t('gitHub')}</a></div>`;
+    return `<div class="stack"><div class="page-head"><div class="title">${t('settingsTitle')}</div></div>
+      ${block(t('secInterface'),lang+row(t('darkTheme'),'dark-toggle',state.dark))}
+      ${block(t('secConnection'),row(t('autoConnect'),'auto-toggle',state.auto)+soon(t('killSwitch'))+soon(t('reconnect'))+soon(t('startup')))}
+      ${block(t('secNotifications'),soon(t('alerts'))+soon(t('sound')))}
+      ${block(t('secAbout'),about)}
+      <p class="hint">${t('settingsHint')}</p></div>`;
+  }
+  function render(){
+    app.classList.toggle('light',!state.dark);
+    document.documentElement.lang=state.lang;
+    document.title=t('docTitle');
+    document.getElementById('brandSub').textContent=t('brandSub');
+    document.getElementById('statusIcons').innerHTML=ico('signal',15)+ico('battery',16);
+    nav.setAttribute('aria-label',t('navLabel'));
+    const servers=state.page==='pair-settings'?pairSettings():state.page==='users'?pairUsers():state.page==='edit-user'?userEdit():state.page==='install'?install():serverList();
+    main.innerHTML=state.tab==='servers'?servers:state.tab==='settings'?settings():viewVPN();
+    const key=state.tab+'|'+state.page+'|'+(state.page==='install'?state.install.step:0)+'|'+(state.page==='edit-user'?state.userId:0);
+    if(key!==viewKey){viewKey=key;main.scrollTop=0}
+    nav.innerHTML=[['vpn','shield','VPN'],['servers','servers',t('navServers')],['settings','settings',t('navSettings')]].map(([keyName,icon,label])=>`<button class="nav-button ${state.tab===keyName?'active':''}" data-tab="${keyName}"><span class="ico">${ico(icon,26)}</span><span>${label}</span></button>`).join('');
+    renderModal();
+    renderToast();
+  }
+  function renderModal(){
+    const m=state.modal;
+    if(!m){modalRoot.innerHTML='';return}
+    let html='';
+    const u=currentUser();
+    if(m==='confirm')html=`<strong>${t('addProfileQ')}</strong><span class="hint">${t('fileChosen')}</span><div class="filename">${esc(state.pendingFile?.name)}</div><div class="grid2">${button(t('cancel'),'cancel-modal')}${button(t('add'),'confirm-file',{primary:true})}</div><p class="hint">${t('fileHint')}</p>`;
+    else if(m==='invalid')html=`<strong>${t('badFile')}</strong><p class="hint">${t('badFileHint')}</p>${button(t('close'),'cancel-modal',{primary:true,block:true})}`;
+    else if(m==='rename'){const p=state.profiles.find(x=>x.id===state.editingId);html=`<strong>${t('renameTitle')}</strong>${field(t('nameLabel'),'rename-input',tx(p?.name||''))}<div class="grid2">${button(t('cancel'),'cancel-modal')}${button(t('save'),'confirm-rename',{primary:true})}</div>`}
+    else if(m==='config'&&u){const url=configUrl(u);html=`<strong>${t('configBtn')}</strong><span class="hint">${esc(tx(u.name))}.ovpn</span>${qrMarkup(url)}<div class="filename">${esc(url)}</div>${state.copied?`<p class="hint">${t('copied')}</p>`:''}<div class="grid2">${button(t('close'),'cancel-modal')}${button(t('copy'),'copy-link')}</div>${button(t('download'),'download-config',{primary:true,block:true,icon:'download'})}<p class="hint">${t('configHint')}</p>`}
+    else if(m==='delete-user'&&u)html=`<strong>${t('deleteQ')}</strong><p class="hint">${t('deleteBody').replace('{name}',esc(tx(u.name)))}</p><div class="grid2">${button(t('cancel'),'cancel-modal')}${button(t('delete'),'confirm-delete',{danger:true})}</div>`;
+    else if(m==='connecting')html=`<div class="spin">${ico('refresh',40)}</div><strong>${t('connecting')}</strong><p class="hint">${t('connectingHint')}</p>`;
+    else if(m==='installing')html=installModalHtml();
+    const cls=m==='connecting'?' connect':m==='installing'?' install':'';
+    modalRoot.innerHTML=`<div class="overlay"><div class="dialog${cls}" role="dialog" aria-modal="true">${html}</div></div>`;
+  }
+  function installModalHtml(){
+    const run=state.installRun||{index:0,done:false,ok:true,failAt:-1,log:[]};
+    const total=INSTALL_STEPS.length;
+    const pct=run.done?(run.ok?100:Math.round(((run.failAt+1)/total)*100)):Math.round((run.index/total)*100);
+    const steps=INSTALL_STEPS.map((key,i)=>{
+      let status='wait';
+      if(run.done){
+        if(run.ok)status='done';
+        else if(i<run.failAt)status='done';
+        else if(i===run.failAt)status='fail';
+      }else if(i<run.index)status='done';
+      else if(i===run.index)status='active';
+      const mark=status==='done'?ico('check',14):status==='fail'?ico('x',14):status==='active'?ico('refresh',14):`<span style="width:6px;height:6px;border-radius:50%;background:var(--border);display:block"></span>`;
+      return `<div class="install-step ${status}"><span class="install-mark">${mark}</span><span>${t(key)}</span></div>`;
+    }).join('');
+    const head=run.done
+      ?`<strong>${t('installProgress')}</strong>`
+      :`<div class="install-head"><span class="spin">${ico('refresh',22)}</span><div><strong>${t('installProgress')}</strong><p class="hint" style="margin:2px 0 0">${t('installWait')}</p></div></div>`;
+    const result=run.done?`<div class="install-result ${run.ok?'ok':'fail'}">${run.ok?t('installOk'):t('installFail')}</div>`:'';
+    const actions=run.done?`<div class="grid2">${button(t('downloadLog'),'download-install-log',{icon:'download'})}${button(t('close'),'close-install',{primary:true})}</div>`:'';
+    return `${head}<div class="install-bar" aria-hidden="true"><i style="width:${pct}%"></i></div><div class="install-steps">${steps}</div>${result}${actions}`;
+  }
+  function startInstallProgress(){
+    clearInterval(installTimer);
+    const w=state.install;
+    const stamp=()=>new Date().toISOString().replace('T',' ').slice(0,19);
+    const willFail=/fail|ошибк/i.test(w.name||'');
+    const failAt=willFail?INSTALL_STEPS.indexOf('instGre'):-1;
+    state.installRun={index:0,done:false,ok:true,failAt,log:[`[${stamp()}] start ${w.name.trim()||'vpn'}`]};
+    state.modal='installing';
+    state.notice='';
+    installTimer=setInterval(()=>{
+      const run=state.installRun;
+      if(!run||run.done||state.modal!=='installing'){clearInterval(installTimer);return}
+      const key=INSTALL_STEPS[run.index];
+      if(run.failAt===run.index){
+        run.log.push(`[${stamp()}] fail ${t(key)}`);
+        run.done=true;
+        run.ok=false;
+        clearInterval(installTimer);
+        render();
+        return;
+      }
+      run.log.push(`[${stamp()}] ok ${t(key)}`);
+      if(run.index>=INSTALL_STEPS.length-1){
+        run.done=true;
+        run.ok=true;
+        run.index=INSTALL_STEPS.length;
+        run.log.push(`[${stamp()}] ${t('installOk')}`);
+        clearInterval(installTimer);
+      }else run.index++;
+      render();
+    },700);
+  }
+  function finishInstall(){
+    const w=state.install;
+    const id='p'+Date.now();
+    const uid=Date.now();
+    const mk=s=>({ip:s.ip.trim(),port:s.port.trim()||'22',login:s.login.trim()||'root',online:true,cpu:1,ram:8,hdd:12,uptime:'0м'});
+    state.pairs.unshift({id,name:w.name.trim(),session:true,gre:true,dns:w.dns,dnsCustom:[...w.dnsCustom],route:w.route,lists:{iplist:[],rueu:[],ru:[]},a:mk(w.servers[0]),b:mk(w.servers[1])});
+    state.users.unshift({id:uid,pair:id,name:w.userName.trim()||'user',comment:w.userComment.trim(),password:'',limit:w.limit,auth:w.auth,connections:[]});
+    state.pairId=id;
+    state.install=freshInstall();
+    state.page='list';
+    state.notice='installed';
+    state.installRun=null;
+  }
+  function action(type,id){
+    const model=()=>state.page==='install'?state.install:currentPair();
+    switch(type){
+      case 'toggle-theme':state.dark=!state.dark;break;
+      case 'set-lang':if(id==='ru'||id==='en')state.lang=id;break;
+      case 'toggle-profiles':state.menu=!state.menu;break;
+      case 'choose-profile':state.selected=id;state.vpn=false;state.menu=false;break;
+      case 'rename-profile':state.menu=false;state.editingId=id;state.modal='rename';break;
+      case 'toggle-vpn':{
+        if(state.vpnBusy||!state.profiles.length)break;
+        state.menu=false;
+        if(state.vpn){state.vpn=false;break}
+        state.vpnBusy=true;
+        clearTimeout(vpnTimer);
+        vpnTimer=setTimeout(()=>{
+          state.vpn=true;
+          state.vpnBusy=false;
+          render();
+        },1400);
+        break;
+      }
+      case 'pick-file':state.menu=false;fileInput.value='';fileInput.click();return;
+      case 'cancel-modal':
+        if(state.modal==='installing'&&state.installRun&&!state.installRun.done)break;
+        state.modal=null;state.pendingFile=null;state.copied=false;state.installRun=null;break;
+      case 'confirm-file':if(state.pendingFile){const name=state.pendingFile.name.replace(/\.ovpn$/i,'');const nid='c'+Date.now();state.profiles.push({id:nid,name});state.selected=nid;state.vpn=false}state.pendingFile=null;state.modal=null;break;
+      case 'confirm-rename':{const value=canon(document.getElementById('rename-input')?.value.trim()||'');if(!value)return;const p=state.profiles.find(x=>x.id===state.editingId);if(p)p.name=value;state.modal=null;break}
+      case 'open-install':state.install=freshInstall();state.page='install';state.notice='';break;
+      case 'install-prev':state.install.step=Math.max(1,state.install.step-1);state.notice='';break;
+      case 'install-next':{
+        const w=state.install;
+        if(w.step===1){
+          if(!w.name.trim()||w.servers.some(s=>!s.ip.trim()||!s.port.trim()||!s.login.trim()||!s.password.trim())){state.notice='needServers';break}
+          state.notice='';w.step=2;
+        }else if(w.step===2){
+          if(!w.userName.trim()){state.notice='needUser';break}
+          state.notice='';w.step=3;
+        }else{
+          if(w.dns==='custom'&&!w.dnsCustom[0].trim()){state.notice='needDns';break}
+          startInstallProgress();
+        }
+        break;
+      }
+      case 'download-install-log':{
+        const run=state.installRun;
+        if(!run?.log?.length)break;
+        const blob=new Blob([run.log.join('\n')+'\n'],{type:'text/plain;charset=utf-8'});
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download=`vpn-install-${Date.now()}.log`;
+        a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+        break;
+      }
+      case 'close-install':{
+        const run=state.installRun;
+        clearInterval(installTimer);
+        state.modal=null;
+        if(run?.ok)finishInstall();
+        else{state.installRun=null;state.notice=''}
+        break;
+      }
+      case 'set-dns':model().dns=id;state.notice='';break;
+      case 'set-route':model().route=id;state.notice='';break;
+      case 'set-auth':state.install.auth=id;state.notice='';break;
+      case 'limit-dec':
+      case 'limit-inc':{
+        const dir=type==='limit-inc'?1:-1;
+        if(state.page==='install')state.install.limit=clamp((state.install.limit||0)+dir,0,100);
+        else{const u=currentUser();if(u)u.limit=clamp((u.limit||0)+dir,0,100)}
+        break;
+      }
+      case 'back-servers':
+        if(state.page==='install'&&state.install.step>1){state.install.step--;state.notice='';break}
+        state.page=state.page==='edit-user'?'users':'list';state.notice='';break;
+      case 'toggle-session':{
+        const p=state.pairs.find(x=>x.id===id);
+        if(!p)break;
+        if(p.session){p.session=false;break}
+        state.modal='connecting';
+        state.connectingId=id;
+        clearTimeout(connectTimer);
+        connectTimer=setTimeout(()=>{
+          const pair=state.pairs.find(x=>x.id===state.connectingId);
+          if(pair)pair.session=true;
+          state.connectingId=null;
+          if(state.modal==='connecting')state.modal=null;
+          render();
+        },2200);
+        break;
+      }
+      case 'settings-pair':{
+        const p=state.pairs.find(x=>x.id===id);
+        if(!p?.session){showToast(t('needSession'));break}
+        state.pairId=id;state.page='pair-settings';state.listTab='iplist';state.ipDraft='';state.notice='';
+        break;
+      }
+      case 'apply-pair-settings':{
+        const p=currentPair();
+        if(p?.dns==='custom'&&!p.dnsCustom[0].trim()){state.notice='needDns';break}
+        state.notice='settingsApplied';
+        break;
+      }
+      case 'users-pair':{
+        const p=state.pairs.find(x=>x.id===id);
+        if(!p?.session){showToast(t('needSession'));break}
+        state.pairId=id;state.page='users';state.userQuery='';state.notice='';
+        break;
+      }
+      case 'list-tab':state.listTab=id;state.ipDraft='';state.notice='';break;
+      case 'refresh-iplist':state.notice='iplistRefreshed';break;
+      case 'add-ip':{
+        const raw=(document.getElementById('ip-add')?.value||'').trim();
+        if(!raw||!/\d/.test(raw)||!/^[0-9a-fA-F:.\/-]+$/.test(raw)){state.notice='badIp';break}
+        const list=currentPair().lists[state.listTab];
+        if(!list.includes(raw))list.push(raw);
+        state.ipDraft='';state.notice='';break;
+      }
+      case 'del-ip':{const [key,index]=String(id).split(':');currentPair().lists[key].splice(Number(index),1);break}
+      case 'add-user':{const name=document.getElementById('new-user')?.value.trim();if(!name)return;state.users.push({id:Date.now(),pair:state.pairId,name,comment:'',password:'',limit:2,auth:'file',connections:[]});break}
+      case 'edit-user':state.userId=Number(id);state.page='edit-user';state.notice='';break;
+      case 'save-user':{const u=currentUser();if(!u||!u.name.trim()){state.notice='needUser';break}state.notice='saved';break}
+      case 'show-config':state.modal='config';state.copied=false;break;
+      case 'copy-link':{const u=currentUser();if(!u||!navigator.clipboard?.writeText)break;navigator.clipboard.writeText(configUrl(u)).then(()=>{state.copied=true;showToast(t('linkCopiedToast'));render()}).catch(()=>{state.copied=false;render()});return}
+      case 'download-config':{
+        const u=currentUser();
+        if(!u)break;
+        const safe=(tx(u.name)||'client').replace(/[^\w.\-а-яА-ЯёЁ]+/gi,'_')||'client';
+        const body=`# VPN Manager prototype\n# ${u.name}\nclient\ndev tun\nproto udp\nremote vpn.local 1194\nresolv-retry infinite\nnobind\npersist-key\npersist-tun\nremote-cert-tls server\n# demo file — not a real VPN config\n`;
+        const blob=new Blob([body],{type:'application/x-openvpn-profile'});
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download=`${safe}.ovpn`;
+        a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+        break;
+      }
+      case 'delete-user':state.modal='delete-user';break;
+      case 'confirm-delete':{
+        const u=currentUser();
+        if(!u)break;
+        state.undoUser={...u,connections:[...u.connections]};
+        state.users=state.users.filter(x=>x.id!==u.id);
+        state.modal=null;state.page='users';state.notice='';
+        clearTimeout(undoTimer);
+        showToast(t('userDeleted'),t('undo'),'undo-delete');
+        undoTimer=setTimeout(()=>{state.undoUser=null},5200);
+        break;
+      }
+      case 'undo-delete':{
+        if(!state.undoUser)break;
+        state.users.push(state.undoUser);
+        state.users.sort((a,b)=>a.id-b.id);
+        state.undoUser=null;
+        clearTimeout(undoTimer);
+        state.toast=null;
+        break;
+      }
+    }
+    render();
+  }
+  app.addEventListener('click',ev=>{
+    syncForm();
+    const tab=ev.target.closest('[data-tab]');
+    if(tab){state.tab=tab.dataset.tab;state.page='list';state.menu=false;state.notice='';render();return}
+    const btn=ev.target.closest('[data-action]');
+    if(btn){action(btn.dataset.action,btn.dataset.id);return}
+    if(state.menu&&!ev.target.closest('.profile-picker')){state.menu=false;render()}
+  });
+  app.addEventListener('change',ev=>{
+    if(ev.target.id==='dark-toggle'){state.dark=ev.target.checked;render()}
+    if(ev.target.id==='auto-toggle')state.auto=ev.target.checked;
+    if(ev.target.id==='kill-toggle')state.kill=ev.target.checked;
+    if(ev.target.id==='reconnect-toggle')state.reconnect=ev.target.checked;
+    if(ev.target.id==='startup-toggle')state.startup=ev.target.checked;
+    if(ev.target.id==='alerts-toggle')state.alerts=ev.target.checked;
+    if(ev.target.id==='sound-toggle')state.sound=ev.target.checked;
+  });
+  fileInput.onchange=()=>{const f=fileInput.files?.[0];if(!f)return;state.pendingFile=f;state.modal=/\.ovpn$/i.test(f.name)?'confirm':'invalid';renderModal()};
+  app.addEventListener('input',ev=>{
+    if(ev.target.id!=='user-search')return;
+    const pos=ev.target.selectionStart;
+    state.userQuery=ev.target.value;
+    render();
+    const el=document.getElementById('user-search');
+    if(el){el.focus();try{el.setSelectionRange(pos,pos)}catch(_){}}
+  });
+  app.addEventListener('focusin',ev=>{
+    const el=ev.target;
+    if(!el.matches||!el.matches('input,textarea,select'))return;
+    setTimeout(()=>{try{el.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},60);
+  });
+  applyPhysicalPhoneSize();
+  window.addEventListener('resize',applyPhysicalPhoneSize);
+  window.addEventListener('orientationchange',applyPhysicalPhoneSize);
+  render();
+})();
+</script>
+</body>
+</html>
