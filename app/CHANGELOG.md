@@ -1,3 +1,8 @@
+## 0.1.3 — 2026-11-09
+
+- Portable macOS `.app` (double-click, no installer)
+- Auto-opens browser to the UI
+
 ## 0.1.2 — 2026-11-09
 
 - Remove fake phone status bar (time / battery / signal)

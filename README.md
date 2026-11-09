@@ -14,11 +14,11 @@ go build -o bin/vpn-manager ./cmd/vpn-manager
 
 Then open http://127.0.0.1:8787/
 
-## macOS `0.1.2`
+## macOS `0.1.3`
 
 Download from Releases:
-- `vpn-manager-0.1.2-darwin-arm64.zip` (Apple Silicon)
-- `vpn-manager-0.1.2-darwin-amd64.zip` (Intel)
+- `vpn-manager-VPN-Manager-0.1.3-macos-arm64.app.zip` (Apple Silicon)
+- `vpn-manager-VPN-Manager-0.1.3-macos-amd64.app.zip` (Intel)
 
 Then run `./vpn-manager` and open http://127.0.0.1:8787/
 
